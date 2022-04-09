@@ -175,7 +175,7 @@ public class SlotMachineGUI {
         .addGap(0, 300, Short.MAX_VALUE)
         );
     }
-     
+     // komentar
     /** Lays out the panels and reels.  */
     private void layoutReels() {
         GroupLayout pnlReelsLayout = new GroupLayout(pnlReels);
