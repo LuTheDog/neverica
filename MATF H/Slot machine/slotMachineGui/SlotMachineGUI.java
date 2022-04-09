@@ -176,9 +176,9 @@ public class SlotMachineGUI {
         );
     }
      
-    /** Lays out the panels and reels. */
+    /** Lays out the panels and reels.  */
     private void layoutReels() {
-         
+         //komentar
         GroupLayout pnlReelsLayout = new GroupLayout(pnlReels);
         pnlReels.setLayout(pnlReelsLayout);
         pnlReelsLayout.setHorizontalGroup(
