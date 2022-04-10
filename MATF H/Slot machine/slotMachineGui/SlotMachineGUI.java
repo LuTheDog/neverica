@@ -777,9 +777,9 @@ public class SlotMachineGUI {
 				bools[0] = bools[1] = bools[2] = true;
     			prize += multi.get(first) * bet * lineMulti;
     			
-				poruka=new JDialog();
-	            poruka = new dijalog(this, "Cestitamo", true,prize);
-	            poruka.setVisible(true);
+				//poruka=new JDialog();
+	           // poruka = new dijalog(this, "Cestitamo", true,prize);
+	            //poruka.setVisible(true);
     		} else if (((first == second && i[0] == i[1]) || (second == third && i[1] == i[2]) && numPartial < 100)) {
     			prize += multi.get(second) * bet * lineMulti * 0.2;
     			if (first == second) bools[0] = bools[1] = true;
