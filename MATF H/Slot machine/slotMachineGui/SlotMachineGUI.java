@@ -8,10 +8,12 @@ import javax.swing.border.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.DecimalFormat;
-
+import slotMachineGui.dijalog.*;
 import javax.swing.GroupLayout.Alignment;
 import java.util.HashMap;
  
+
+
 public class SlotMachineGUI {
 	
 	
@@ -61,6 +63,8 @@ public class SlotMachineGUI {
     private JLabel labelaDole1;
     private JLabel labelaDole2;
     private JLabel rtp;
+    
+    private JDialog poruka;
     
     private Timer lightUpTimer;
     private int lineLightUpCounter;
@@ -768,9 +772,14 @@ public class SlotMachineGUI {
     		third  = reel2Symbols.get((reel[2] + i[2]) % reel2Symbols.size()).getDescription();
     		boolean[] bools = new boolean[3];
     		if (first == second && second == third) {
+    			//
     			winningLine[cnt] = true;
 				bools[0] = bools[1] = bools[2] = true;
     			prize += multi.get(first) * bet * lineMulti;
+    			
+				poruka=new JDialog();
+	            poruka = new dijalog(this, "Cestitamo", true,prize);
+	            poruka.setVisible(true);
     		} else if (((first == second && i[0] == i[1]) || (second == third && i[1] == i[2]) && numPartial < 100)) {
     			prize += multi.get(second) * bet * lineMulti * 0.2;
     			if (first == second) bools[0] = bools[1] = true;
