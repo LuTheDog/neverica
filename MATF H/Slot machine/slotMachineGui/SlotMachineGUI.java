@@ -2,49 +2,84 @@ package slotMachineGui;
  
 import java.awt.*;
 import javax.swing.*;
-import javax.swing.LayoutStyle.ComponentPlacement;
-import java.text.DecimalFormat;
 import java.util.Random;
 import java.util.ArrayList;
 import javax.swing.border.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.text.DecimalFormat;
+
+import javax.swing.GroupLayout.Alignment;
+import java.util.HashMap;
  
 public class SlotMachineGUI {
-     
-    private JButton btnCash, btnSpin;
-    private JCheckBox cbAlwaysWin, cbSuperJackpot, cbTrollface;
+	
+	
+    private Timer timer;
+    private JButton btnSpin;
     private JFrame frmFrame;
-    private JLabel lblCredits, lblLost, lblMatchThree, lblMatchTwo, lblMoney, lblReel1, lblReel2, lblReel3, lblStatus, lblWon;
-    private JPanel pnlReels, pnlReel1, pnlReel2, pnlReel3;
-    private JProgressBar prgbarCheatUnlocker;
-    private JSeparator sepCheats, sepStats, sepStats2, sepStatus;
-    private JToggleButton tgglSound;
-    private int credits = 100, boughtCredits = 100, bet = 15, matchThree, matchTwo, win, lost;
-    private double payout = 25.0, creditBuyout = 10.0, funds;
-    private int reel1 = 7, reel2 = 7, reel3 = 7; // starting values of the reels.
-    private ArrayList<ImageIcon> images = new ArrayList<ImageIcon>();
-    private DecimalFormat df = new DecimalFormat("0.00");
-     
-    public SlotMachineGUI(int credits, int boughtCredits, int bet, double payout, double creditBuyout, int reel1, int reel2, int reel3) {
-        this.credits=credits;
-        this.boughtCredits=boughtCredits;
-        this.bet=bet;
-        this.payout=payout;
-        this.creditBuyout=creditBuyout;
-        this.reel1=reel1;
-        this.reel2=reel2;
-        this.reel3=reel3;
-        createForm();
-        loadImages();
-        addFields();
-        addButtons();
-        layoutFrame();
-        layoutReels();
-        layoutOther();
-    }
-     
+    private JLabel lblCredits, lblReel0_0, lblReel0_1, lblReel0_2, lblStatus;
+    private JPanel pnlReels, pnlReel0_0, pnlReel0_1, pnlReel0_2;
+    private double credits = 100.0, bet = 15.0, uplata=100.0;
+    private int[] reel = {0, 5, 12};
+    private int[][] lines = {{0, 0, 0}, {1, 1, 1}, {2, 2, 2}, {0, 1, 2}, {2, 1, 0}};
+    private int[] reelDelay = {10, 20, 37};
+    private HashMap<String, Double> multi = new HashMap<String, Double>();
+    private ArrayList<ImageIcon> reel0Symbols = new ArrayList<ImageIcon>();
+    private ArrayList<ImageIcon> reel1Symbols = new ArrayList<ImageIcon>();
+    private ArrayList<ImageIcon> reel2Symbols = new ArrayList<ImageIcon>();
+    private JPanel pnlReel1_0;
+    private JLabel lblReel1_0;
+    private JPanel pnlReel1_1;
+    private JLabel lblReel1_1;
+    private JLabel lblReel1_2;
+    private JPanel pnlReel2_0;
+    private JLabel lblReel2_0;
+    private JPanel pnlReel2_1;
+    private JLabel lblReel2_1;
+    private JPanel pnlReel2_2;
+    private JLabel lblReel2_2;
+    private JPanel pnlReel1_2;
+    
+    private JPanel donjiPanel;
+    private JPanel donjiPanel1;
+    private JPanel donjiPanel2;
+    private JPanel donjiPanel3;
+    private JPanel donjiPanel4;
+    private JPanel donjiPanel5;
+    private JPanel donjiPanel6;
+    
+    private JPanel donjiPanelGore;
+    private JPanel donjiPanelDole;
+
+    private JButton strGore1;
+    private JButton strDole1; 
+    private JButton strGore2;
+    private JButton strDole2;
+    public JButton uplati;
+    private JCheckBox sim;
+    private JLabel labelaDole1;
+    private JLabel labelaDole2;
+    private JLabel rtp;
+    
+    private Timer lightUpTimer;
+    private int lineLightUpCounter;
+    private boolean[] winningLine = new boolean[lines.length];
+    
+    private JPanel[][] panelMatrix;
+    private JLabel[][] labelMatrix;
+    private ArrayList<ArrayList<ImageIcon>> symbolMatrix;
+    private int reelSize = 30;
+    
+    private boolean simulation = false;
+    private double simSpent = 0, simWon = 0;
+    private int simCount = 5_000_000;
+    private int simWins = 0;
+    
+    private HashMap<String, java.awt.Color> symbolColors = new HashMap<String, java.awt.Color>();
+    
     public SlotMachineGUI() {
+    	initMulti();
         createForm();
         loadImages();
         addFields();
@@ -52,525 +87,775 @@ public class SlotMachineGUI {
         layoutFrame();
         layoutReels();
         layoutOther();
+        initPanelMatrix();
+        initLabelMatrix();
+        initSymbolMatrix();
+        initTimer();
+        initSymbolColors();
+        initLightUpTimer();
+        setReelIcons();
     }
      
+    private int numSpins[];
+    
+    private void initLightUpTimer() {
+    	lightUpTimer = new Timer(500, new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				setReelIcons();
+				int loopCounter = 0;
+				while(!winningLine[lineLightUpCounter] && loopCounter < winningLine.length) {
+					lineLightUpCounter = (lineLightUpCounter + 1) % winningLine.length;
+					loopCounter ++; // protiv infinite loop
+				}
+				if (loopCounter < winningLine.length) { //ovde sam dodao
+					String first, second, third;
+					int[] i = lines[lineLightUpCounter];
+					first = reel0Symbols.get((reel[0] + i[0]) % reel0Symbols.size()).getDescription();
+		    		second = reel1Symbols.get((reel[1] + i[1]) % reel1Symbols.size()).getDescription();
+		    		third  = reel2Symbols.get((reel[2] + i[2]) % reel2Symbols.size()).getDescription();
+		    		boolean[] bools = new boolean[3];
+		    		if (first == second && second == third) {
+		    	
+						bools[0] = bools[1] = bools[2] = true;
+		    	
+		    		} else if (((first == second && i[0] == i[1]) || (second == third && i[1] == i[2]))) {
+		    			
+		    			if (first == second) bools[0] = bools[1] = true;
+		    			else bools[1] = bools[2] = true;
+		    		}
+		    		lightBorders(i, bools);
+		    		lineLightUpCounter++;
+				}
+			}
+		});
+    }
+    
+    private void initTimer() {
+    	timer = new Timer(75, new ActionListener() {
+			int skips = 0;
+			int counter = 0;
+			@Override
+			public void actionPerformed(ActionEvent e) {
+	    		if (skips == 0 || counter % skips == 0) {
+					for (int j = 0; j < reel.length; j++) {
+		    			if (numSpins[j] > 0) {
+		    				numSpins[j]--;
+		    				reel[j] = (reel[j] - 1 + symbolMatrix.get(j).size()) % symbolMatrix.get(j).size();
+		    			}
+		    		}
+				}
+	    		counter++;
+	    		boolean getOut = true;
+	    		setReelIcons();
+	    		for (int i = 0; i < numSpins.length; i++) {
+	    			if (numSpins[i] == 0) {
+	    				skips = skips < 2 ? skips + 1 : 2;
+	    			}
+	    			if (numSpins[i] > 0) getOut = false;
+	    		}
+	    		if (getOut) {
+    				timer.stop();
+    				matchCheck();
+    				btnSpin.setEnabled(true);
+    				
+    				lineLightUpCounter = 0; // counter za animaciju linija
+    				lightUpTimer.start(); // timer za animaciju linija
+    				
+    				skips = counter = 0;
+    			}
+			}
+		} );
+    }
+    
+    private void initMulti() {
+    	multi.put("Sljiva", 1.9);
+    	multi.put("Dunja", 2.1);
+    	multi.put("Kajsija", 2.3);
+    	multi.put("Grozdje", 2.5);
+    	multi.put("Visnja", 2.7);
+    	multi.put("Kazan", 12.0);
+    	multi.put("Pljoska", 15.0);
+    	multi.put("Deda", 60.0);
+    	multi.put("Bure", 0.0);
+    }
+    
+    private void initPanelMatrix() {
+    	 panelMatrix = new JPanel[][] {{pnlReel0_0, pnlReel1_0, pnlReel2_0}, 
+					{pnlReel0_1, pnlReel1_1, pnlReel2_1}, 
+					{pnlReel0_2, pnlReel1_2, pnlReel2_2}};
+    }
+    
+    private void initLabelMatrix() {
+   	 labelMatrix = new JLabel[][] {{lblReel0_0, lblReel1_0, lblReel2_0}, 
+					{lblReel0_1, lblReel1_1, lblReel2_1}, 
+					{lblReel0_2, lblReel1_2, lblReel2_2}};
+    }
+    
+    private void initSymbolMatrix() {
+    	symbolMatrix = new ArrayList<ArrayList<ImageIcon>>();
+    	symbolMatrix.add(reel0Symbols);
+    	symbolMatrix.add(reel1Symbols);
+    	symbolMatrix.add(reel2Symbols);	
+    }
+    
+    private void initSymbolColors() {
+    	symbolColors.put("Sljiva", new Color(250, 228, 105));
+    	symbolColors.put("Dunja", new Color(250, 228, 105));
+    	symbolColors.put("Kajsija", new Color(250, 228, 105));
+    	symbolColors.put("Grozdje", new Color(250, 228, 105));
+    	symbolColors.put("Visnja", new Color(250, 228, 105));
+    	symbolColors.put("Kazan", new Color(250, 187, 105));
+    	symbolColors.put("Pljoska", new Color(250, 187, 105));
+    	symbolColors.put("Deda", new Color(250, 149, 105));
+    	symbolColors.put("Bure", new Color(204, 94, 255));
+    	
+    }
+    
     /** Creates the JFrame and Panels. */
     private void createForm() {
-         
+        
         frmFrame = new JFrame();
+        frmFrame.getContentPane().setMaximumSize(new Dimension(1000, 1000));
         frmFrame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        frmFrame.setTitle("Warner Slots");
-        frmFrame.setResizable(false);
+        frmFrame.setTitle("Radza slots");
+        //frmFrame.setSize(1000,900);
         frmFrame.setVisible(true);
+        frmFrame.setResizable(false);
          
         pnlReels = new JPanel();
+        pnlReels.setMaximumSize(new Dimension(500, 32767));
         pnlReels.setBorder(BorderFactory.createEtchedBorder());
          
-        pnlReel1 = new JPanel();
-        pnlReel1.setBackground(new Color(255, 215, 0));
-        pnlReel1.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
-        pnlReel2 = new JPanel();
-        pnlReel2.setBackground(new Color(255, 216, 0));
-        pnlReel2.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
-        pnlReel3 = new JPanel();
-        pnlReel3.setBackground(new java.awt.Color(255, 215, 0));
-        pnlReel3.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
+        pnlReel0_0 = new JPanel();
+        pnlReel0_0.setBackground(new Color(255, 215, 0));
+        pnlReel0_0.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
+        pnlReel0_1 = new JPanel();
+        pnlReel0_1.setBackground(new Color(255, 216, 0));
+        pnlReel0_1.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
+        pnlReel0_2 = new JPanel();
+        pnlReel0_2.setBackground(new java.awt.Color(255, 215, 0));
+        pnlReel0_2.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
          
     }
      
     /** Adds labels to the form. */
     private void addFields() {
          
-        lblReel1 = new JLabel();
-        lblReel2 = new JLabel();
-        lblReel3 = new JLabel();
-         
-        sepStats = new JSeparator();
-        lblMatchTwo = new JLabel();
-        lblMatchTwo.setText("Matched Two: ");
-        lblMatchThree = new JLabel();
-        lblMatchThree.setText("Matched Three: ");
-        lblWon = new JLabel();
-        lblWon.setText("Won: ");
-         
-        sepStats2 = new JSeparator();
-        sepStats2.setOrientation(SwingConstants.VERTICAL);
+        lblReel0_0 = new JLabel();
+        lblReel0_1 = new JLabel();
+        lblReel0_2 = new JLabel();
         lblCredits = new JLabel();
         lblCredits.setText("Credits: "+credits);
-        lblMoney = new JLabel();
-        lblMoney.setText("Money: £"+df.format(funds));
-        lblLost = new JLabel();
-        lblLost.setText("Lost: ");
-         
-        sepStatus = new JSeparator();
+        lblCredits.setFont(new Font("Comic Sans", Font.PLAIN,24));
         lblStatus = new JLabel();
         lblStatus.setBackground(new Color(255, 255, 255));
         lblStatus.setFont(new Font("Arial", 1, 14));
         lblStatus.setHorizontalAlignment(SwingConstants.CENTER);
-        lblStatus.setText("Welcome to WARNER SLOTS!!! ©2012");
-         
-        sepCheats = new JSeparator();
-        prgbarCheatUnlocker = new JProgressBar();
-        prgbarCheatUnlocker.setToolTipText("Fill the bar to unlock the cheat menu.");
-         
-        lblReel1.setIcon(images.get(reel1));
-        lblReel2.setIcon(images.get(reel2));
-        lblReel3.setIcon(images.get(reel3));
-         
+        lblStatus.setText(" ");
+        
+        lblReel0_0.setIcon(reel0Symbols.get(reel[0]));
+        lblReel0_1.setIcon(reel1Symbols.get(reel[1]));
+        lblReel0_2.setIcon(reel2Symbols.get(reel[2]));
+        
     }
      
     /** Adds buttons to the form. */
     private void addButtons() {
-         
+    	
         btnSpin = new JButton();
+        btnSpin.setFont(new Font("Tahoma", Font.PLAIN, 32));
         btnSpin.setBackground(new Color(50, 255, 50));
-        btnSpin.setText("Зафрљачи");
-        btnSpin.setToolTipText("Click to spin the reels!");
+        btnSpin.setText("Zavrti");
+        btnSpin.setToolTipText("Zavrti me");
         btnSpin.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
         btnSpin.setInheritsPopupMenu(true);
         btnSpin.setMaximumSize(new Dimension(200, 50));
         btnSpin.setMinimumSize(new Dimension(200, 50));
         btnSpin.addActionListener(new SpinHandler());
-         
-        btnCash = new JButton();
-        btnCash.setBackground(new Color(255, 0, 0));
-        btnCash.setText("Потроши паре");
-        btnCash.setToolTipText("£"+df.format(bet)+" converts to "+boughtCredits+" credits.");
-        btnCash.setHorizontalTextPosition(SwingConstants.CENTER);
-        btnCash.addActionListener(new BuyCreditsHandler());
-         
-        tgglSound = new JToggleButton();
-        tgglSound.setSelected(false);
-        tgglSound.setText("Укључи звук");
-        tgglSound.addActionListener(new SoundHandler());
-         
-        cbAlwaysWin = new JCheckBox();
-        cbAlwaysWin.setText("Always Win Mode");
-        cbAlwaysWin.setEnabled(false);
-        cbAlwaysWin.addActionListener(new AlwaysWinHandler());
-         
-        cbTrollface = new JCheckBox();
-        cbTrollface.setText("Trollface");
-        cbTrollface.setEnabled(false);
-        cbTrollface.addActionListener(new TrollfaceHandler());
-         
-        cbSuperJackpot = new JCheckBox();
-        cbSuperJackpot.setText("Super Jackpot");
-        cbSuperJackpot.setEnabled(false);
-        cbSuperJackpot.addActionListener(new SuperPrizeHandler());
-         
     }
      
     /** Lays out the frame. */
     private void layoutFrame() {
+        
          
         GroupLayout frameLayout = new GroupLayout(frmFrame.getContentPane());
-        frmFrame.getContentPane().setLayout(frameLayout);
         frameLayout.setHorizontalGroup(
-        frameLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-        .addGap(0, 400, Short.MAX_VALUE)
+        	frameLayout.createParallelGroup(Alignment.LEADING)
+        		.addGap(0, 446, Short.MAX_VALUE)
         );
         frameLayout.setVerticalGroup(
-        frameLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-        .addGap(0, 300, Short.MAX_VALUE)
+        	frameLayout.createParallelGroup(Alignment.LEADING)
+        		.addGap(0, 317, Short.MAX_VALUE)
         );
+        frmFrame.getContentPane().setLayout(frameLayout);
     }
      // komentar
     /** Lays out the panels and reels.  */
     private void layoutReels() {
-        GroupLayout pnlReelsLayout = new GroupLayout(pnlReels);
-        pnlReels.setLayout(pnlReelsLayout);
-        pnlReelsLayout.setHorizontalGroup(
-        pnlReelsLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-        .addGroup(pnlReelsLayout.createSequentialGroup()
+        
+        pnlReel1_1 = new JPanel();
+        pnlReel1_1.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
+        pnlReel1_1.setBackground(new Color(255, 216, 0));
+        
+        lblReel1_1 = new JLabel();
+        GroupLayout gl_pnlReel1_1 = new GroupLayout(pnlReel1_1);
+        gl_pnlReel1_1.setHorizontalGroup(
+        	gl_pnlReel1_1.createParallelGroup(Alignment.LEADING)
+        		.addGap(0, 26, Short.MAX_VALUE)
+        		.addGroup(gl_pnlReel1_1.createSequentialGroup()
+        			.addContainerGap()
+        			.addComponent(lblReel1_1)
+        			.addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        gl_pnlReel1_1.setVerticalGroup(
+        	gl_pnlReel1_1.createParallelGroup(Alignment.LEADING)
+        		.addGap(0, 28, Short.MAX_VALUE)
+        		.addGroup(gl_pnlReel1_1.createSequentialGroup()
+        			.addContainerGap()
+        			.addComponent(lblReel1_1)
+        			.addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        pnlReel1_1.setLayout(gl_pnlReel1_1);
+        
+        pnlReel2_2 = new JPanel();
+        pnlReel2_2.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
+        pnlReel2_2.setBackground(new Color(255, 216, 0));
+        
+        lblReel2_2 = new JLabel();
+        GroupLayout gl_pnlReel2_2 = new GroupLayout(pnlReel2_2);
+        gl_pnlReel2_2.setHorizontalGroup(
+        	gl_pnlReel2_2.createParallelGroup(Alignment.LEADING)
+        		.addGap(0, 26, Short.MAX_VALUE)
+        		.addGroup(gl_pnlReel2_2.createSequentialGroup()
+        			.addContainerGap()
+        			.addComponent(lblReel2_2)
+        			.addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        gl_pnlReel2_2.setVerticalGroup(
+        	gl_pnlReel2_2.createParallelGroup(Alignment.LEADING)
+        		.addGap(0, 28, Short.MAX_VALUE)
+        		.addGroup(gl_pnlReel2_2.createSequentialGroup()
+        			.addContainerGap()
+        			.addComponent(lblReel2_2)
+        			.addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        pnlReel2_2.setLayout(gl_pnlReel2_2);
+         
+        GroupLayout gl_pnlReel0_0 = new GroupLayout(pnlReel0_0);
+        pnlReel0_0.setLayout(gl_pnlReel0_0);
+        gl_pnlReel0_0.setHorizontalGroup(
+        gl_pnlReel0_0.createParallelGroup(GroupLayout.Alignment.LEADING)
+        .addGroup(gl_pnlReel0_0.createSequentialGroup()
         .addContainerGap()
-        .addComponent(pnlReel1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-        .addGap(18, 18, 18)
-        .addComponent(pnlReel2, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-        .addGap(18, 18, 18)
-        .addComponent(pnlReel3, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+        .addComponent(lblReel0_0)
         .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
-        pnlReelsLayout.setVerticalGroup(
-        pnlReelsLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-        .addGroup(pnlReelsLayout.createSequentialGroup()
+        gl_pnlReel0_0.setVerticalGroup(
+        gl_pnlReel0_0.createParallelGroup(GroupLayout.Alignment.LEADING)
+        .addGroup(gl_pnlReel0_0.createSequentialGroup()
         .addContainerGap()
-        .addGroup(pnlReelsLayout.createParallelGroup(GroupLayout.Alignment.TRAILING, false)
-        .addComponent(pnlReel2, GroupLayout.Alignment.LEADING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        .addComponent(pnlReel1, GroupLayout.Alignment.LEADING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        .addComponent(pnlReel3, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        .addComponent(lblReel0_0)
         .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
          
-        GroupLayout pnlReel1Layout = new GroupLayout(pnlReel1);
-        pnlReel1.setLayout(pnlReel1Layout);
-        pnlReel1Layout.setHorizontalGroup(
-        pnlReel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-        .addGroup(pnlReel1Layout.createSequentialGroup()
+        GroupLayout gl_pnlReel0_1 = new GroupLayout(pnlReel0_1);
+        pnlReel0_1.setLayout(gl_pnlReel0_1);
+        gl_pnlReel0_1.setHorizontalGroup(
+        gl_pnlReel0_1.createParallelGroup(GroupLayout.Alignment.LEADING)
+        .addGroup(gl_pnlReel0_1.createSequentialGroup()
         .addContainerGap()
-        .addComponent(lblReel1)
+        .addComponent(lblReel0_1)
         .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
-        pnlReel1Layout.setVerticalGroup(
-        pnlReel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-        .addGroup(pnlReel1Layout.createSequentialGroup()
+        gl_pnlReel0_1.setVerticalGroup(
+        gl_pnlReel0_1.createParallelGroup(GroupLayout.Alignment.LEADING)
+        .addGroup(gl_pnlReel0_1.createSequentialGroup()
         .addContainerGap()
-        .addComponent(lblReel1)
-        .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-         
-        GroupLayout pnlReel2Layout = new GroupLayout(pnlReel2);
-        pnlReel2.setLayout(pnlReel2Layout);
-        pnlReel2Layout.setHorizontalGroup(
-        pnlReel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-        .addGroup(pnlReel2Layout.createSequentialGroup()
-        .addContainerGap()
-        .addComponent(lblReel2)
-        .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-        pnlReel2Layout.setVerticalGroup(
-        pnlReel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-        .addGroup(pnlReel2Layout.createSequentialGroup()
-        .addContainerGap()
-        .addComponent(lblReel2)
+        .addComponent(lblReel0_1)
         .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
          
-        GroupLayout pnlReel3Layout = new GroupLayout(pnlReel3);
-        pnlReel3.setLayout(pnlReel3Layout);
-        pnlReel3Layout.setHorizontalGroup(
-        pnlReel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-        .addGroup(pnlReel3Layout.createSequentialGroup()
+        GroupLayout gl_pnlReel0_2 = new GroupLayout(pnlReel0_2);
+        pnlReel0_2.setLayout(gl_pnlReel0_2);
+        gl_pnlReel0_2.setHorizontalGroup(
+        gl_pnlReel0_2.createParallelGroup(GroupLayout.Alignment.LEADING)
+        .addGroup(gl_pnlReel0_2.createSequentialGroup()
         .addContainerGap()
-        .addComponent(lblReel3)
+        .addComponent(lblReel0_2)
         .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
-        pnlReel3Layout.setVerticalGroup(
-        pnlReel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-        .addGroup(pnlReel3Layout.createSequentialGroup()
+        gl_pnlReel0_2.setVerticalGroup(
+        gl_pnlReel0_2.createParallelGroup(GroupLayout.Alignment.LEADING)
+        .addGroup(gl_pnlReel0_2.createSequentialGroup()
         .addContainerGap()
-        .addComponent(lblReel3)
+        .addComponent(lblReel0_2)
         .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
-         
-    }
+        pnlReels.setLayout(new GridLayout(0, 3, 0, 0));
+        pnlReels.add(pnlReel0_0);
+        pnlReels.add(pnlReel0_1);
+        pnlReels.add(pnlReel0_2);
+        
+        pnlReel1_0 = new JPanel();
+        pnlReel1_0.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
+        pnlReel1_0.setBackground(new Color(255, 216, 0));
+        
+        lblReel1_0 = new JLabel();
+        GroupLayout gl_pnlReel1_0 = new GroupLayout(pnlReel1_0);
+        gl_pnlReel1_0.setHorizontalGroup(
+        	gl_pnlReel1_0.createParallelGroup(Alignment.LEADING)
+        		.addGap(0, 26, Short.MAX_VALUE)
+        		.addGroup(gl_pnlReel1_0.createSequentialGroup()
+        			.addContainerGap()
+        			.addComponent(lblReel1_0)
+        			.addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        gl_pnlReel1_0.setVerticalGroup(
+        	gl_pnlReel1_0.createParallelGroup(Alignment.LEADING)
+        		.addGap(0, 28, Short.MAX_VALUE)
+        		.addGroup(gl_pnlReel1_0.createSequentialGroup()
+        			.addContainerGap()
+        			.addComponent(lblReel1_0)
+        			.addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        pnlReel1_0.setLayout(gl_pnlReel1_0);
+        pnlReels.add(pnlReel1_0);
+        pnlReels.add(pnlReel1_1);
+        
+        pnlReel1_2 = new JPanel();
+        pnlReel1_2.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
+        pnlReel1_2.setBackground(new Color(255, 216, 0));
+        
+        lblReel1_2 = new JLabel();
+        GroupLayout gl_pnlReel1_2 = new GroupLayout(pnlReel1_2);
+        gl_pnlReel1_2.setHorizontalGroup(
+        	gl_pnlReel1_2.createParallelGroup(Alignment.LEADING)
+        		.addGap(0, 26, Short.MAX_VALUE)
+        		.addGroup(gl_pnlReel1_2.createSequentialGroup()
+        			.addContainerGap()
+        			.addComponent(lblReel1_2)
+        			.addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        gl_pnlReel1_2.setVerticalGroup(
+        	gl_pnlReel1_2.createParallelGroup(Alignment.LEADING)
+        		.addGap(0, 28, Short.MAX_VALUE)
+        		.addGroup(gl_pnlReel1_2.createSequentialGroup()
+        			.addContainerGap()
+        			.addComponent(lblReel1_2)
+        			.addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        pnlReel1_2.setLayout(gl_pnlReel1_2);
+        pnlReels.add(pnlReel1_2);
+        
+        pnlReel2_0 = new JPanel();
+        pnlReel2_0.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
+        pnlReel2_0.setBackground(new Color(255, 216, 0));
+        
+        lblReel2_0 = new JLabel();
+        GroupLayout gl_pnlReel2_0 = new GroupLayout(pnlReel2_0);
+        gl_pnlReel2_0.setHorizontalGroup(
+        	gl_pnlReel2_0.createParallelGroup(Alignment.LEADING)
+        		.addGap(0, 26, Short.MAX_VALUE)
+        		.addGroup(gl_pnlReel2_0.createSequentialGroup()
+        			.addContainerGap()
+        			.addComponent(lblReel2_0)
+        			.addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        gl_pnlReel2_0.setVerticalGroup(
+        	gl_pnlReel2_0.createParallelGroup(Alignment.LEADING)
+        		.addGap(0, 28, Short.MAX_VALUE)
+        		.addGroup(gl_pnlReel2_0.createSequentialGroup()
+        			.addContainerGap()
+        			.addComponent(lblReel2_0)
+        			.addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        pnlReel2_0.setLayout(gl_pnlReel2_0);
+        pnlReels.add(pnlReel2_0);
+        
+        pnlReel2_1 = new JPanel();
+        pnlReel2_1.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
+        pnlReel2_1.setBackground(new Color(255, 216, 0));
+        
+        lblReel2_1 = new JLabel();
+        GroupLayout gl_pnlReel2_1 = new GroupLayout(pnlReel2_1);
+        gl_pnlReel2_1.setHorizontalGroup(
+        	gl_pnlReel2_1.createParallelGroup(Alignment.LEADING)
+        		.addGap(0, 26, Short.MAX_VALUE)
+        		.addGroup(gl_pnlReel2_1.createSequentialGroup()
+        			.addContainerGap()
+        			.addComponent(lblReel2_1)
+        			.addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        gl_pnlReel2_1.setVerticalGroup(
+        	gl_pnlReel2_1.createParallelGroup(Alignment.LEADING)
+        		.addGap(0, 28, Short.MAX_VALUE)
+        		.addGroup(gl_pnlReel2_1.createSequentialGroup()
+        			.addContainerGap()
+        			.addComponent(lblReel2_1)
+        			.addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        //----------------------------------------------------------------------------------------
+        pnlReel2_1.setLayout(gl_pnlReel2_1);
+        pnlReels.add(pnlReel2_1);
+        pnlReels.add(pnlReel2_2);
+        donjiPanel = new JPanel();
+        donjiPanel1 = new JPanel();
+        donjiPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
+        donjiPanelGore= new JPanel();
+        donjiPanelGore.setLayout(new FlowLayout(FlowLayout.TRAILING,50,0));
+        donjiPanelDole = new JPanel();
+        donjiPanelDole.setLayout(new FlowLayout(FlowLayout.LEFT,50,0));
+        
+        labelaDole1 = new JLabel("Ulog: " + bet);
+        labelaDole1.setFont(new Font("Comic Sans",Font.PLAIN,24));
+        labelaDole2 = new JLabel("Uplata: " + uplata);
+        labelaDole2.setFont(new Font("Comic Sans",Font.PLAIN,24));
+        rtp = new JLabel();
+        rtp.setVisible(false);
+        
+        
+        strGore1 = new JButton();
+        strGore1.setIcon(new ImageIcon("arrowup.png"));
+        strGore1.addActionListener(new KreditiGore()); // nova klasa ovde!
+        strDole1 = new JButton();
+        strDole1.setBounds(0,0,60,20);
+        strDole1.setIcon(new ImageIcon("arrowdown.png"));
+        strDole1.addActionListener(new KreditiDole()); // nova klasa ovde!
+        strGore1.setBounds(0,50,60,20);
+        
+        uplati=new JButton();
+        uplati.setText("   Uplati   ");
+        uplati.setFont(new Font("Arial", Font.BOLD, 20));
+        uplati.addActionListener(new IzvrsiUplatu());
+        
+	    strGore2 = new JButton();
+	    strGore2.setIcon(new ImageIcon("arrowup.png"));
+	    strGore2.addActionListener(new UplataGore()); // nova klasa ovde!
+	    strDole2 = new JButton();
+	    strDole2.setBounds(0,0,60,20);
+	    strDole2.setIcon(new ImageIcon("arrowdown.png"));
+	    strDole2.addActionListener(new UplataDole()); // nova klasa ovde!
+	    strGore2.setBounds(0,50,60,20);
+      
+
+        //donjiPanel1.setBounds(0,0,200,100);
+        //donjiPanel1.setBackground(Color.white);
+        donjiPanel2 = new JPanel();
+        donjiPanel3 = new JPanel();
+        donjiPanel4 = new JPanel();
+        donjiPanel5 = new JPanel();
+        donjiPanel6 = new JPanel();
+        sim = new JCheckBox();
+        sim.setText("Simulacija");
+        sim.setFocusable(false);
+        sim.setFont(new Font("Consolas",Font.PLAIN,24));
+        //donjiPanel2.setBounds(20,0,100,50);
+        donjiPanel3 = new JPanel();
+        donjiPanel.setBounds(0,800,750,500);
+
+        donjiPanel.add(donjiPanelGore);
+        donjiPanel.add(donjiPanelDole);
+        donjiPanelGore.add(donjiPanel1);
+        donjiPanelGore.add(donjiPanel2);
+        donjiPanelGore.add(donjiPanel3);
+        donjiPanel1.add(strGore1);
+        donjiPanel1.add(labelaDole1);
+        donjiPanel1.add(strDole1);
+        donjiPanel2.add(lblCredits);
+        donjiPanel3.add(sim);
+        
+
+        donjiPanelDole.add(donjiPanel4);
+        donjiPanelDole.add(donjiPanel5);
+        donjiPanelDole.add(donjiPanel6);
+        donjiPanel4.add(strGore2);
+        donjiPanel4.add(labelaDole2);
+        donjiPanel4.add(strDole2);
+        donjiPanel5.add(uplati);
+        donjiPanel6.add(rtp);
+        frmFrame.getContentPane().add(donjiPanel);
+        
+
+        
+        }
      
     /** lays out the remaining labels, check boxes, progress bars, etc. */
     private void layoutOther() {
          
         GroupLayout layout = new GroupLayout(frmFrame.getContentPane());
-        frmFrame.getContentPane().setLayout(layout);
-         
         layout.setHorizontalGroup(
-        layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-        .addGroup(layout.createSequentialGroup()
-        .addContainerGap()
-        .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-        .addGroup(layout.createSequentialGroup()
-        .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
-        .addComponent(sepCheats)
-        .addComponent(prgbarCheatUnlocker, GroupLayout.DEFAULT_SIZE, 426, Short.MAX_VALUE))
-        .addGap(0, 0, Short.MAX_VALUE))
-        .addGroup(layout.createSequentialGroup()
-        .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-        .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
-        .addGroup(layout.createSequentialGroup()
-        .addComponent(cbAlwaysWin)
-        .addGap(18, 18, 18)
-        .addComponent(cbTrollface)
-        .addGap(18, 18, 18)
-        .addComponent(cbSuperJackpot)
-        .addPreferredGap(ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        .addComponent(tgglSound))
-        .addComponent(btnSpin, GroupLayout.Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        .addComponent(pnlReels, GroupLayout.Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        .addComponent(sepStats, GroupLayout.Alignment.TRAILING)
-        .addComponent(lblStatus, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        .addGroup(layout.createSequentialGroup()
-        .addGroup(layout.createParallelGroup(GroupLayout.Alignment.TRAILING, false)
-        .addComponent(lblMatchTwo, GroupLayout.Alignment.LEADING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        .addComponent(lblWon, GroupLayout.Alignment.LEADING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        .addComponent(lblMatchThree, GroupLayout.DEFAULT_SIZE, 149, Short.MAX_VALUE))
-        .addPreferredGap(ComponentPlacement.UNRELATED)
-        .addComponent(sepStats2, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-        .addPreferredGap(ComponentPlacement.UNRELATED)
-        .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
-        .addComponent(lblLost, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        .addComponent(lblCredits, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        .addComponent(lblMoney, GroupLayout.DEFAULT_SIZE, 154, Short.MAX_VALUE))
-        .addGap(0, 0, Short.MAX_VALUE)))
-        .addGroup(layout.createParallelGroup(GroupLayout.Alignment.TRAILING)
-        .addComponent(btnCash)
-        .addComponent(sepStatus, GroupLayout.PREFERRED_SIZE, 426, GroupLayout.PREFERRED_SIZE)))
-        .addContainerGap())))
+        	layout.createParallelGroup(Alignment.LEADING)
+        		.addGroup(layout.createSequentialGroup()
+        			.addContainerGap()
+        			.addGroup(layout.createParallelGroup(Alignment.LEADING)
+        				.addComponent(pnlReels, Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 426, Short.MAX_VALUE)
+        				.addComponent(lblStatus, GroupLayout.DEFAULT_SIZE, 426, Short.MAX_VALUE)
+        				.addGroup(layout.createSequentialGroup()
+        					.addGap(2)
+        					.addComponent(btnSpin, 200, 424, Short.MAX_VALUE)
+        					.addGap(0)))
+        			.addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
-         
         layout.setVerticalGroup(
-        layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-        .addGroup(layout.createSequentialGroup()
-        .addContainerGap()
-        .addComponent(pnlReels, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-        .addPreferredGap(ComponentPlacement.RELATED)
-        .addComponent(btnSpin, GroupLayout.PREFERRED_SIZE, 56, GroupLayout.PREFERRED_SIZE)
-        .addPreferredGap(ComponentPlacement.UNRELATED)
-        .addComponent(sepStats, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-        .addPreferredGap(ComponentPlacement.UNRELATED)
-        .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-        .addGroup(layout.createSequentialGroup()
-        .addComponent(lblWon, GroupLayout.PREFERRED_SIZE, 19, GroupLayout.PREFERRED_SIZE)
-        .addPreferredGap(ComponentPlacement.RELATED)
-        .addComponent(lblMatchTwo, GroupLayout.PREFERRED_SIZE, 19, GroupLayout.PREFERRED_SIZE)
-        .addPreferredGap(ComponentPlacement.RELATED)
-        .addComponent(lblMatchThree, GroupLayout.DEFAULT_SIZE, 25, Short.MAX_VALUE))
-        .addComponent(sepStats2)
-        .addGroup(layout.createSequentialGroup()
-        .addComponent(lblLost, GroupLayout.PREFERRED_SIZE, 19, GroupLayout.PREFERRED_SIZE)
-        .addPreferredGap(ComponentPlacement.RELATED)
-        .addComponent(lblCredits, GroupLayout.PREFERRED_SIZE, 19, GroupLayout.PREFERRED_SIZE)
-        .addPreferredGap(ComponentPlacement.RELATED)
-        .addComponent(lblMoney, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        .addComponent(btnCash, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        .addPreferredGap(ComponentPlacement.UNRELATED)
-        .addComponent(sepStatus, GroupLayout.PREFERRED_SIZE, 2, GroupLayout.PREFERRED_SIZE)
-        .addPreferredGap(ComponentPlacement.UNRELATED)
-        .addComponent(lblStatus, GroupLayout.PREFERRED_SIZE, 30, GroupLayout.PREFERRED_SIZE)
-        .addPreferredGap(ComponentPlacement.UNRELATED)
-        .addComponent(sepCheats, GroupLayout.PREFERRED_SIZE, 5, GroupLayout.PREFERRED_SIZE)
-        .addPreferredGap(ComponentPlacement.RELATED)
-        .addComponent(prgbarCheatUnlocker, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-        .addPreferredGap(ComponentPlacement.UNRELATED)
-        .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-        .addComponent(cbAlwaysWin)
-        .addComponent(cbTrollface)
-        .addComponent(cbSuperJackpot)
-        .addComponent(tgglSound))
-        .addContainerGap())
+        	layout.createParallelGroup(Alignment.LEADING)
+        		.addGroup(layout.createSequentialGroup()
+        			.addContainerGap()
+        			.addComponent(pnlReels, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+        			.addComponent(btnSpin, GroupLayout.PREFERRED_SIZE, 56, GroupLayout.PREFERRED_SIZE)
+        			.addGap(33)
+        			.addComponent(lblStatus, GroupLayout.PREFERRED_SIZE, 30, GroupLayout.PREFERRED_SIZE)
+        			.addGap(81))
         );
+        frmFrame.getContentPane().setLayout(layout);
          
         frmFrame.pack();
          
     }
      
-    /** Performs action when Buy Credits button is clicked. */
-    class BuyCreditsHandler implements ActionListener {
-        public void actionPerformed(ActionEvent event) {
-            buyCredits();
+
+    class KreditiGore implements ActionListener{
+    	public void actionPerformed(ActionEvent event) {
+            bet+=5;
+            strDole1.setEnabled(true);
+            labelaDole1.setText("Ulog: " + bet);
+            labelaDole1.setFont(new Font("Comic Sans", Font.PLAIN,24));
         }
     }
-     
-    /** if the player has enough funds credits are added. */
-    public void buyCredits() {
-        if (funds >= creditBuyout) {
-            funds -= creditBuyout;
-            lblMoney.setText("Money: £"+df.format(funds));
-            credits += boughtCredits;
-            lblCredits.setText("Credits: "+credits);
-            lblStatus.setText("+"+boughtCredits+" credits purchased! -£"+df.format(creditBuyout));
-            } else {
-            lblStatus.setText("Insufficient £ to purchase credits!");
+    class KreditiDole implements ActionListener{
+    	public void actionPerformed(ActionEvent event) {
+    		if(bet==10){ strDole1.setEnabled(false);}
+    		bet-=5;
+           
+            labelaDole1.setText("Ulog: " + bet);
+            labelaDole1.setFont(new Font("Comic Sans", Font.PLAIN,24));
         }
-        buyCreditsCheck();
     }
-     
-    /** if user has enough funds to buy credits changes buttons colour to alert user. */
-    public void buyCreditsCheck() {
-        if (funds < bet) {
-            btnCash.setBackground(new java.awt.Color(255, 0, 0));
-            } else {
-            btnCash.setBackground(new java.awt.Color(50, 255, 50));
+    
+    class UplataGore implements ActionListener{
+    	public void actionPerformed(ActionEvent event) {
+            uplata+=5;
+            strDole2.setEnabled(true);
+            labelaDole2.setText("Uplata: " + uplata);
+            labelaDole2	.setFont(new Font("Comic Sans", Font.PLAIN,24));
+        }
+    }
+    class UplataDole implements ActionListener{
+    	public void actionPerformed(ActionEvent event) {
+    		if(uplata==10){ strDole2.setEnabled(false);}
+    		uplata-=5;
+           
+            labelaDole2.setText("Uplata: " + uplata);
+            labelaDole2.setFont(new Font("Comic Sans", Font.PLAIN,24));
         }
     }
      
     /** Performs action when Spin button is clicked. */
     class SpinHandler implements ActionListener {
-        public void actionPerformed(ActionEvent event) {
-            if (funds < creditBuyout && credits < bet) {
-                lblStatus.setText("<html><a href='http://www.gambleaware.co.uk/'>www.gambleaware.co.uk</a></html>");
-                } else if ((credits - bet) >= 0) {
-                pnlReel1.setBackground(new java.awt.Color(255, 215, 0));
-                pnlReel2.setBackground(new java.awt.Color(255, 215, 0));
-                pnlReel3.setBackground(new java.awt.Color(255, 215, 0));
-                genReelNumbers();
-                matchCheck();
-                } else {
-                lblStatus.setText("Bet is "+bet+" credits, purchase more with £!");
+    	public void actionPerformed(ActionEvent event) {
+    		lightUpTimer.stop();
+    		//setReelIcons();
+    		btnSpin.setEnabled(false);
+            for (int i = 0; i < panelMatrix.length; i++) {
+                for (int j = 0; j < panelMatrix[i].length; j++) {
+                    panelMatrix[i][j].setBackground(new java.awt.Color(255, 215, 0));
+                }
             }
-            buyCreditsCheck();
+            if (sim.isSelected()) {
+            	getRTP();
+            } else {
+            	genReelNumbers();
+            }
         }
+    }
+    
+    class IzvrsiUplatu implements ActionListener{
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			credits+=uplata;
+			lblCredits.setText("Credits: " + (credits));
+		}
+    	
     }
      
     /** Generates the 3 reel numbers. */
     public void genReelNumbers() {
         Random rand = new Random();
-        if (cbAlwaysWin.isSelected() == true) { // If the Always win cheat mode is enabled.
-            int winType = rand.nextInt(4); // generates number between 0-3 to determine the type of win
-            reel1 = rand.nextInt(images.size());
-            if (winType == 0) { // winType = 0 - Reels 1, 2 and 3 will all match.
-                reel2 = reel1;
-                reel3 = reel1;
-                } else if (winType == 1) { // winType = 1 - Reels 1 and 2 will match.
-                reel2 = reel1;
-                } else if (winType == 2) { // winType = 2 - Reels 1 and 3 will match.
-                reel3 = reel1;
-                } else {    // winType = 3 - Reels 2 and 3 will match.
-                if (reel1 >= 0 ) {
-                    reel2 = reel1 + 1;
-                    reel3 = reel1 + 1;
-                    } if (reel1 == images.size()-1) {
-                    reel2 = reel1 - 1;
-                    reel3 = reel1 - 1;
-                }
-            }
-            } else { // If the Always win cheat mode is disabled play a normal game.
-            reel1 = rand.nextInt(images.size());
-            reel2 = rand.nextInt(images.size());
-            reel3 = rand.nextInt(images.size());
-        }
-        setReelIcon(reel1, reel2, reel3); // Set the reel image
+        int[] randNums = new int[symbolMatrix.size()];
+        if (!simulation) {
+        	for (int i = 0; i < symbolMatrix.size(); i++) {
+        		randNums[i] = rand.nextInt(symbolMatrix.get(i).size());
+        	}
+    		spin(randNums);
+        } else {
+        	for (int j = 0; j < simCount; j++) {
+        		for (int i = 0; i < symbolMatrix.size(); i++) {
+            		randNums[i] = rand.nextInt(symbolMatrix.get(i).size());
+            	}
+        		simSpin(randNums);
+        	}
+    	}
     }
-     
+    
+    private void setReelIcons() {
+    	for (int j = 0; j < labelMatrix.length; j++) {
+			for (int k = 0; k < labelMatrix.length; k++) {
+				labelMatrix[j][k].setIcon(symbolMatrix.get(j).get((reel[j] + k) % symbolMatrix.get(j).size()));
+				panelMatrix[j][k].setBackground(symbolColors.get(symbolMatrix.get(j).get((reel[j] + k) % symbolMatrix.get(j).size()).getDescription()));
+			}
+		}
+    }
+    
+    
     /** Sets the reels icon based on loaded image in images ArrayList. */
-    public void setReelIcon(int ico1, int ico2, int ico3) {
-        lblReel1.setIcon(images.get(ico1)); // icon = the ArrayList index = random reel number
-        lblReel2.setIcon(images.get(ico2));
-        lblReel3.setIcon(images.get(ico3));
+    public void spin(int[] randNums) {
+    	timer.start();
+    	credits -= bet;
+    	lblCredits.setText("Credits: " + (credits)); // deduct bet amount from available credits.
+    	numSpins = new int[randNums.length];
+    	for (int i = 0; i < randNums.length; i++) {
+    		numSpins[i] = reelSize + randNums[i] + reelDelay[i];
+    	}	
+    }
+    
+    public void simSpin(int[] randNums) {
+    	for (int i = 0; i < reel.length; i++) {
+    		reel[i] = reel[i] - randNums[i] - reelSize + 4 * symbolMatrix.get(i).size();
+    		reel[i] %= symbolMatrix.get(i).size();
+    	}
+    	simSpent += 1;
+    	double prize = getPrize(1);
+    	simWon += prize;
+    	if (prize > 0) simWins++;
     }
      
     /** Checks for number matches and adjusts score depending on result. */
     public void matchCheck() {
-        if (reel1 == reel2 && reel2 == reel3) {
-            lblStatus.setText("You matched THREE symbols ("+images.get(reel1).getDescription()+")! +£"+df.format(getPrize(payout))+"!");
-            lblMatchThree.setText("Matched Three: "+matchThree());
-            pnlReel1.setBackground(new java.awt.Color(255, 0, 0)); // Highlights matched icons.
-            pnlReel2.setBackground(new java.awt.Color(255, 0, 0));
-            pnlReel3.setBackground(new java.awt.Color(255, 0, 0));
-            } else if (reel1 == reel2 || reel1 == reel3) {
-            lblStatus.setText("You matched TWO symbols ("+images.get(reel1).getDescription()+")! +£"+df.format(getPrize(payout))+"!");
-            lblMatchTwo.setText("Matched Two: "+matchTwo());
-            if (reel1 == reel2) {
-                pnlReel1.setBackground(new java.awt.Color(255, 0, 0)); // Highlights matched icons.
-                pnlReel2.setBackground(new java.awt.Color(255, 0, 0));
-                } else if (reel1 == reel3){
-                pnlReel1.setBackground(new java.awt.Color(255, 0, 0)); // Highlights matched icons.
-                pnlReel3.setBackground(new java.awt.Color(255, 0, 0));
-            }
-            } else if (reel2 == reel3) {
-            lblStatus.setText("You matched TWO symbols ("+images.get(reel2).getDescription()+")! +£"+df.format(getPrize(payout))+"!");
-            lblMatchTwo.setText("Matched Two: "+matchTwo());
-            pnlReel2.setBackground(new java.awt.Color(255, 0, 0)); // Highlights matched icons.
-            pnlReel3.setBackground(new java.awt.Color(255, 0, 0));
-            } else {
-            lblStatus.setText("Sorry, you didn't match any symbols. -"+bet+" credits!");
-            lblLost.setText("Lost: "+lose());
-        }
-        lblCredits.setText("Credits: "+(credits -= bet)); // deduct bet amount from available credits.
-        lblMoney.setText("Money: £"+df.format((funds += getPrize(payout)))); // If there is a win add amount to cash pot.
-        lblWon.setText("Wins: "+win()); // increment win amount.
+        credits += getPrize(bet);
+        lblCredits.setText("Credits: " + (credits)); // deduct bet amount from available credits.
     }
-     
-    /** sets progress bar equal to the current win count. if bar is full it unlocks cheat menu */
-    public void prgBarCheck() {
-        if (prgbarCheatUnlocker.getValue() <= 99) {
-            prgbarCheatUnlocker.setValue(win);
-            } else if (prgbarCheatUnlocker.getValue() == 100) { // after 100 wins unlock the cheats.
-            prgbarCheatUnlocker.setValue(100);
-            lblStatus.setText("100 wins! Congratulations you've unlocked the cheat menu!");
-            cbTrollface.setEnabled(true);
-            cbSuperJackpot.setEnabled(true);
-            cbAlwaysWin.setEnabled(true);
-        }
+
+    private void lightBorders(int a[], boolean[] bools) {
+    	for (int i = 0; i < a.length; i++) {
+    		if (bools[i]) panelMatrix[i][a[i]].setBackground(new java.awt.Color(255, 0, 0));
+		}
     }
-     
+    
+    private void lightBarrel() {
+    	for (int j = 0; j < panelMatrix[2].length; j++) {
+			if (reel2Symbols.get((reel[2] + j) % reel2Symbols.size()).getDescription().equals("Bure")) {
+				panelMatrix[2][j].setBackground(new java.awt.Color(128, 0, 128));
+			}
+		}
+    }
+    
     /** calculates prize to be awarded for win based on number of matches and cheats. */
-    public double getPrize(double prize) {
-        if (reel1 == reel2 && reel2 == reel3) {
-            if (cbSuperJackpot.isSelected() == true) {
-                prize *= 100; // if cheating and all are matched return the full pay out x100.
-                } else {
-                prize = payout; // if all are matched return the full pay out.
-            }
-            } else if (reel1 == reel2 || reel1 == reel3 || reel2 == reel3) {
-            if (cbSuperJackpot.isSelected() == true) {
-                prize *= 50; // if cheating and two are matched return the pay out x50.
-                } else {
-                prize = payout / 5; // if two are matched return 1/5th of the pay out.
-            }
-            } else {
-            prize = 0; // If no win return no prize.
-        }
-        return prize;
+    public double getPrize(double bet) {
+    	int prize = 0;
+    	double lineMulti;
+    	String first, second, third;
+    	int cnt = 0;
+    	int numPartial = 0;
+    	
+    	for (int i[] : lines) {
+    		if (cnt < 3) lineMulti = 1.2;
+    		else if (cnt < 5) lineMulti = 1.5;
+    		else lineMulti = 0.8;
+    		first = reel0Symbols.get((reel[0] + i[0]) % reel0Symbols.size()).getDescription();
+    		second = reel1Symbols.get((reel[1] + i[1]) % reel1Symbols.size()).getDescription();
+    		third  = reel2Symbols.get((reel[2] + i[2]) % reel2Symbols.size()).getDescription();
+    		boolean[] bools = new boolean[3];
+    		if (first == second && second == third) {
+    			winningLine[cnt] = true;
+				bools[0] = bools[1] = bools[2] = true;
+    			prize += multi.get(first) * bet * lineMulti;
+    		} else if (((first == second && i[0] == i[1]) || (second == third && i[1] == i[2]) && numPartial < 100)) {
+    			prize += multi.get(second) * bet * lineMulti * 0.2;
+    			if (first == second) bools[0] = bools[1] = true;
+    			else bools[1] = bools[2] = true;
+    			numPartial++;
+    			winningLine[cnt] = true;
+    		} else {
+    			winningLine[cnt] = false;
+    		}
+    		
+    		//lightBorders(i, bools);
+    		cnt++;
+    	}
+    	for (int j = 0; j < panelMatrix[2].length; j++) {
+			if (reel2Symbols.get((reel[2] + j) % reel2Symbols.size()).getDescription().equals("Bure")) {
+				lightBarrel();
+				prize *= 2;
+			}
+		}
+    	return prize;
     }
      
-    /** Performs action when Super Jack pot check box is clicked. */
-    class SuperPrizeHandler implements ActionListener{
-        public void actionPerformed(ActionEvent e) {
-            if (cbSuperJackpot.isSelected() == true) {
-                lblStatus.setText("Super Prize mode ENABLED! The £ won is now x100!");
-            }
-            if (cbSuperJackpot.isSelected() == false) {
-                lblStatus.setText("Super Prize mode DISABLED! :'(");
-            }
-        }
-    }
-     
-    /** Performs action when Troll face check box is clicked. */
-    class AlwaysWinHandler implements ActionListener{
-        public void actionPerformed(ActionEvent e) {
-            if (cbAlwaysWin.isSelected() == true) {
-                lblStatus.setText("Always Win mode ENABLED! 7-7-7's here we come!");
-            }
-            if (cbAlwaysWin.isSelected() == false) {
-                lblStatus.setText("Always Win mode DISABLED! :'(");
-            }
-        }
-    }
-     
-    /** Performs action when Troll face check box is clicked. */
-    class TrollfaceHandler implements ActionListener{
-        public void actionPerformed(ActionEvent e) {
-            if (cbTrollface.isSelected() == true && images.get(images.size()-1) != createImageIcon("images/Trollface.png", "Trollface")) {
-                images.add(createImageIcon("images/Trollface.png", "Trollface")); // adds a bonus image to the images ArrayList.
-                lblStatus.setText("Trollface mode ENABLED! Trolololololol!");
-            }
-            if (cbTrollface.isSelected() == false && images.get(images.size()-1) != createImageIcon("images/Trollface.png", "Trollface")) {
-                images.remove(images.size()-1); // removes the bonus image (or last one added to the ArrayList) from the images ArrayList.
-                lblStatus.setText("Trollface mode DISABLED! :'(");
-            }
-        }
-    }
-     
-    /** Performs action when sound toggle button is clicked.
-    * NOT IMPLEMENTED
-    */
-    class SoundHandler implements ActionListener{
-        public void actionPerformed(ActionEvent e) {
-            if (tgglSound.isSelected() == false) {
-                tgglSound.setText("Sound ON");
-                lblStatus.setText("Sound effects have been ENABLED!");
-                // allowed to play sounds
-                } else {
-                tgglSound.setText("Sound OFF");
-                lblStatus.setText("Sound effects have been DISABLED!");
-                // disable sounds
-            }
-        }
-    }
-     
-    /** Loads ImageIcons into the images ArrayList.
-    *    The difficulty is determined by the number of images present in the ArrayList:
-    *    •    Add images here to make game more difficult.
-    *    •    Remove images here to make game easier.
-    */
+    
     public void loadImages() {
-        images.add(createImageIcon("p1.jpg", "Banana"));
-        images.add(createImageIcon("p2.jpg", "Bar"));
-        images.add(createImageIcon("p3.jpg", "Bell"));
-        images.add(createImageIcon("p1.jpg", "Cherry"));
-        images.add(createImageIcon("p2.jpg", "Clover"));
-        images.add(createImageIcon("p3.jpg", "Diamond"));
-        images.add(createImageIcon("p1.jpg", "Plum"));
-        images.add(createImageIcon("p2.jpg", "Seven"));
-        images.add(createImageIcon("p3.jpg", "Watermelon"));
+    	reel0Symbols.add(createImageIcon("Sljiva.png", "Sljiva"));
+    	reel0Symbols.add(createImageIcon("Sljiva.png", "Sljiva"));
+    	reel0Symbols.add(createImageIcon("Visnja.png", "Visnja"));
+    	reel0Symbols.add(createImageIcon("Kazan.png", "Kazan"));
+    	reel0Symbols.add(createImageIcon("Pljoska.png", "Pljoska"));
+    	reel0Symbols.add(createImageIcon("Kazan.png", "Kazan"));
+    	reel0Symbols.add(createImageIcon("Dunja.png", "Dunja"));
+    	reel0Symbols.add(createImageIcon("Kajsija.png", "Kajsija"));
+    	reel0Symbols.add(createImageIcon("Deda.png", "Deda"));
+    	reel0Symbols.add(createImageIcon("Visnja.png", "Visnja"));
+    	reel0Symbols.add(createImageIcon("Sljiva.png", "Sljiva"));
+    	reel0Symbols.add(createImageIcon("Grozdje.png", "Grozdje"));
+    	reel0Symbols.add(createImageIcon("Grozdje.png", "Grozdje"));
+    	reel0Symbols.add(createImageIcon("Dunja.png", "Dunja"));
+    	reel0Symbols.add(createImageIcon("Dunja.png", "Dunja"));
+    	reel0Symbols.add(createImageIcon("Kajsija.png", "Kajsija"));
+    	reel0Symbols.add(createImageIcon("Kajsija.png", "Kajsija"));
+    	reel0Symbols.add(createImageIcon("Sljiva.png", "Sljiva"));
+
+    	reel1Symbols.add(createImageIcon("Sljiva.png", "Sljiva"));
+    	reel1Symbols.add(createImageIcon("Sljiva.png", "Sljiva"));
+    	reel1Symbols.add(createImageIcon("Kazan.png", "Kazan"));
+    	reel1Symbols.add(createImageIcon("Pljoska.png", "Pljoska"));
+    	reel1Symbols.add(createImageIcon("Visnja.png", "Visnja"));
+    	reel1Symbols.add(createImageIcon("Kazan.png", "Kazan"));
+    	reel1Symbols.add(createImageIcon("Grozdje.png", "Grozdje"));
+    	reel1Symbols.add(createImageIcon("Dunja.png", "Dunja"));
+    	reel1Symbols.add(createImageIcon("Grozdje.png", "Grozdje"));
+    	reel1Symbols.add(createImageIcon("Kajsija.png", "Kajsija"));
+    	reel1Symbols.add(createImageIcon("Deda.png", "Deda"));
+    	reel1Symbols.add(createImageIcon("Sljiva.png", "Sljiva"));
+    	reel1Symbols.add(createImageIcon("Pljoska.png", "Pljoska"));
+    	reel1Symbols.add(createImageIcon("Visnja.png", "Visnja"));
+    	reel1Symbols.add(createImageIcon("Visnja.png", "Visnja"));
+    	reel1Symbols.add(createImageIcon("Dunja.png", "Dunja"));
+    	reel1Symbols.add(createImageIcon("Dunja.png", "Dunja"));
+    	reel1Symbols.add(createImageIcon("Kajsija.png", "Kajsija"));
+    	reel1Symbols.add(createImageIcon("Kajsija.png", "Kajsija"));
+    	reel1Symbols.add(createImageIcon("Sljiva.png", "Sljiva"));
+    	
+    	reel2Symbols.add(createImageIcon("Sljiva.png", "Sljiva"));
+    	reel2Symbols.add(createImageIcon("Sljiva.png", "Sljiva"));
+    	reel2Symbols.add(createImageIcon("Kazan.png", "Kazan"));
+    	reel2Symbols.add(createImageIcon("Pljoska.png", "Pljoska"));
+    	reel2Symbols.add(createImageIcon("Kazan.png", "Kazan"));
+    	reel2Symbols.add(createImageIcon("Dunja.png", "Dunja"));
+    	reel2Symbols.add(createImageIcon("Visnja.png", "Visnja"));
+    	reel2Symbols.add(createImageIcon("Visnja.png", "Visnja"));
+    	reel2Symbols.add(createImageIcon("Grozdje.png", "Grozdje"));
+    	reel2Symbols.add(createImageIcon("Grozdje.png", "Grozdje"));
+    	reel2Symbols.add(createImageIcon("Kajsija.png", "Kajsija"));
+    	reel2Symbols.add(createImageIcon("Deda.png", "Deda"));
+    	reel2Symbols.add(createImageIcon("Sljiva.png", "Sljiva"));
+    	reel2Symbols.add(createImageIcon("Pljoska.png", "Pljoska"));
+    	reel2Symbols.add(createImageIcon("Dunja.png", "Dunja"));
+    	reel2Symbols.add(createImageIcon("Dunja.png", "Dunja"));
+    	reel2Symbols.add(createImageIcon("Kajsija.png", "Kajsija"));
+    	reel2Symbols.add(createImageIcon("Kajsija.png", "Kajsija"));
+    	reel2Symbols.add(createImageIcon("Sljiva.png", "Sljiva"));
+    	reel2Symbols.add(createImageIcon("Bure.png", "Bure"));
+
     }
      
     /** Create a new ImageIcon, unless the URL is not found. */
@@ -583,30 +868,41 @@ public class SlotMachineGUI {
             return null;
         }
     }
-     
-    /** Increments matchThree by 1 and returns value. */
-    public int matchThree() {
-        matchThree++;
-        return matchThree;
+    
+    public double calculateRTP() {
+    	double prize = 0.0;
+    	double bet = 0.0;
+    	for (int i = 0; i < reel0Symbols.size(); i++) {
+    		for (int j = 0; j < reel1Symbols.size(); j++) {
+    			for (int k = 0; k < reel2Symbols.size(); k++) {
+    	    		reel[0] = i;
+    	    		reel[1] = j; 
+    	    		reel[2] = k;
+    	    		bet++;
+    	    		prize += getPrize(1);
+    	    	}
+        	}
+    	}
+    	DecimalFormat df = new DecimalFormat();
+    	df.setMaximumIntegerDigits(4);
+    	System.out.println("Calc RTP: " + df.format(prize / bet));
+    	return prize / bet;
     }
      
-    /** Increments matchTwo by 1 and returns value. */
-    public int matchTwo() {
-        matchTwo++;
-        return matchTwo;
-    }
-     
-    /** Increments lost by 1 and returns value. */
-    public int lose() {
-        lost++;
-        return lost;
-    }
-     
-    /** Increments win by 1, increases progress bar and returns value. */
-    public int win() {
-        win = matchThree + matchTwo;
-        prgBarCheck(); // Increments the progress bar to unlock cheat menu.
-        return win;
+    public double getRTP() {
+    	simWon = simSpent = simWins = 0;
+    	btnSpin.setEnabled(false);
+    	simulation = true;
+    	genReelNumbers();
+    	simulation = false;
+    	btnSpin.setEnabled(true);
+    	double rtp2 =(double) Math.round(simWon / simSpent*10000)/10000;
+    	rtp.setText("RTP: " + rtp2);
+    	rtp.setFont(new Font("Consolas",Font.PLAIN,24));
+    	rtp.setVisible(true);
+    	System.out.println("Winrate: " + (double)simWins / simCount);
+    	calculateRTP();
+    	return rtp2;
     }
      
     public static void main(String args[]) {
@@ -636,5 +932,4 @@ public class SlotMachineGUI {
         });
          
     }
-     
 }
