@@ -126,7 +126,7 @@ public class SlotMachineGUI {
 		    			else bools[1] = bools[2] = true;
 		    		}
 		    		lightBorders(i, bools);
-		    		lineLightUpCounter++;
+		    		lineLightUpCounter = (lineLightUpCounter + 1) % winningLine.length;
 				}
 			}
 		});
